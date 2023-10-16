@@ -1,0 +1,46 @@
+---
+- name: Repository key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /usr/share/keyrings/docker.asc
+    mode: ugo+rw
+    checksum: 'sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570'
+  become: true
+
+- name: Add repository
+  become: true
+  ansible.builtin.apt_repository:
+    filename: docker-repo
+    repo: 'deb [signed-by=/usr/share/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable'
+    state: present
+
+- name: Install docker
+  become: true
+  ansible.builtin.apt:
+    state: latest
+    update_cache: true
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+- name: Enable service
+  ansible.builtin.systemd:
+    enabled: yes
+    name: docker
+    state: started
+  become: true
+
+- name: Add to group
+  ansible.builtin.user:
+    append: yes
+    groups: docker
+    name: "{{ ansible_env['USER'] }}"
+  become: true
+
+- name: Copy daemon.json
+  ansible.builtin.template:
+    dest: "/etc/docker/daemon.json"
+    src: "daemon.json"
+  become: true
+  notify: restart_docker

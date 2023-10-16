@@ -1,0 +1,7 @@
+---
+- name: Dependencies
+  ansible.builtin.apt:
+    name:
+      - drone-cli
+    state: present
+  become: true

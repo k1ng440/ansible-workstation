@@ -1,0 +1,49 @@
+---
+- name: Check current neovim version
+  ansible.builtin.command: bash -c "nvim --version | sed -e 's/NVIM v//g'| cut -d ' ' -f1 | head -n 1"
+  ignore_errors: true
+  register: current_nvim_version
+  changed_when: false
+
+- debug: msg="current_nvim_version={{ current_nvim_version.stdout }}"
+- debug: msg="nvim_version={{ nvim_version }}"
+
+- name: Compare version
+  fail: msg="Version already exists"
+  when: current_nvim_version.stdout != "" and current_nvim_version.stdout is version(nvim_version, operator='ge', strict=True)
+  register: version_changed
+  ignore_errors: true
+
+- name: Version check and install/upgrade neovim
+  when: version_changed is succeeded
+  become: true
+  block:
+    - name: Creating temp directory
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: "neovim"
+      register: temp_dir
+
+    - name: "Git clone neovim v{{ nvim_version }}"
+      ansible.builtin.git:
+        repo: "https://github.com/neovim/neovim.git"
+        dest: "{{ temp_dir.path }}"
+        version: "v{{ nvim_version }}"
+        update: no
+        depth: 1
+
+    - name: Make
+      community.general.make:
+        chdir: "{{ temp_dir.path }}"
+        params:
+          CMAKE_EXTRA_FLAGS: "-DCMAKE_INSTALL_PREFIX={{ nvim_install_dest }} -DCMAKE_BUILD_TYPE=RelWithDebInfo"
+
+    - name: Make install
+      community.general.make:
+        target: install
+        chdir: "{{ temp_dir.path }}"
+
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"

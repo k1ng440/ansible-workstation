@@ -1,0 +1,27 @@
+---
+- name: Repository key
+  ansible.builtin.get_url:
+    url: https://baltocdn.com/i3-window-manager/signing.asc
+    dest: /usr/share/keyrings/i3-window-manager.asc
+    mode: ugo+rw
+    checksum: 'sha256:a6adff59a3ceb8ad2bf4386b698fdcdb5406379aaac4b12c8280b4eb3bca1635'
+  become: true
+
+- name: Add i3wm apt repository
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64, signed-by=/usr/share/keyrings/i3-window-manager.asc] https://baltocdn.com/i3-window-manager/i3/i3-autobuild/ all main
+    state: present
+    filename: i3wm
+    update_cache: true
+    mode: 0644
+    validate_certs: true
+  become: true
+
+- name: Install i3wm and packages
+  ansible.builtin.apt:
+    state: present
+    name:
+      - i3
+      - polybar
+  become: true
+

@@ -1,0 +1,11 @@
+default_roles:
+    - system
+    - git
+    - zsh
+    - i3
+    - tmux
+    - neovim
+    - doppler
+    - bat
+    - gcp
+   # - drone-cli

@@ -1,0 +1,21 @@
+---
+- name: install zsh and plugins
+  ansible.builtin.apt:
+    name:
+      - zsh
+      - zsh-autosuggestions
+      - zsh-syntax-highlighting
+  become: true
+
+- name: Clone oh-my-zsh
+  ansible.builtin.command: 'git clone -c core.autocrlf=input --depth=1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh'
+  args:
+    chdir: '~'
+    creates: '~/.oh-my-zsh'
+
+- name: Set permissions of oh-my-zsh
+  ansible.builtin.file:
+    path: '~/.oh-my-zsh'
+    mode: 'go-w'
+    recurse: true
+

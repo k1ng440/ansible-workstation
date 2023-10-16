@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  remote_user: k1ng
+  roles:
+    - tmux

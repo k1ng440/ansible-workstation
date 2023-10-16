@@ -1,0 +1,26 @@
+---
+- name: GPG key
+  ansible.builtin.get_url:
+    url: https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key
+    dest: /usr/share/keyrings/doppler.asc
+    checksum: 'sha256:7b9552d5da3f8c8706b77ecc41ea37b86f5242e2e2913d53de6caf8346140154' # curl -sL https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key | sha256sum
+  become: true
+
+- name: De-Armor GPG key
+  ansible.builtin.command:
+    cmd: gpg -o /usr/share/keyrings/doppler.gpg --dearmor /usr/share/keyrings/doppler.asc
+    creates: /usr/share/keyrings/doppler.gpg
+  become: true
+
+- name: Add repository
+  ansible.builtin.apt_repository:
+    filename: docker-repo
+    repo: 'deb [signed-by=/usr/share/keyrings/doppler.gpg] https://packages.doppler.com/public/cli/deb/debian any-version main'
+    state: present
+  become: true
+
+- name: Install
+  ansible.builtin.apt:
+    name: doppler
+    state: present
+  become: true

@@ -1,0 +1,13 @@
+[diff]
+	colorMoved = zebra
+[fetch]
+	prune = True
+[init]
+	defaultBranch = master
+[pull]
+	rebase = True
+[rebase]
+	autoStash = True
+[user]
+	email = john@doe.com
+	name = John Doe

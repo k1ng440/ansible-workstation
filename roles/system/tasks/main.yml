@@ -1,0 +1,37 @@
+---
+- name: Install System Packages 1
+  become: true
+  apt:
+    name: ["build-essential", "cmake", "pkg-config", "libpthread-stubs0-dev"]
+    state: present
+
+- name: Install System Packages 2
+  become: true
+  apt:
+    name: ["unzip", "libtool", "libtool-bin", "gettext"]
+    state: present
+
+- name: Install System Packages 3
+  become: true
+  apt:
+    name: ["git", "curl", "lsof", "ccache", "ninja-build", "python3-pip", "moreutils", "dnsutils"]
+    state: present
+
+- name: Install System Packages 4
+  become: true
+  apt:
+    name: ["apt-transport-https", "ca-certificates", "gnupg", "libevent-dev", "ncurses-dev", "openssl", "libssl-dev"]
+    state: present
+
+- name: Install System Packages 5
+  become: true
+  apt:
+    name: ["shellcheck", "libfontconfig1-dev", "entr"]
+    state: present
+
+# - name: Set hosts
+#   ansible.builtin.template:
+#     dest: "/etc/hosts"
+#     src: hosts.j2
+#   become: true
+
