@@ -1,27 +1,71 @@
 ---
-- name: Repository key
-  ansible.builtin.get_url:
-    url: https://baltocdn.com/i3-window-manager/signing.asc
-    dest: /usr/share/keyrings/i3-window-manager.asc
-    mode: ugo+rw
-    checksum: 'sha256:a6adff59a3ceb8ad2bf4386b698fdcdb5406379aaac4b12c8280b4eb3bca1635'
-  become: true
+- name: Check current i3 version
+  ansible.builtin.command:
+    cmd: bash -c "/usr/bin/i3 --version | cut -d' ' -f3"
+  ignore_errors: true
+  register: current_i3_version
+  changed_when: false
 
-- name: Add i3wm apt repository
-  ansible.builtin.apt_repository:
-    repo: deb [arch=amd64, signed-by=/usr/share/keyrings/i3-window-manager.asc] https://baltocdn.com/i3-window-manager/i3/i3-autobuild/ all main
-    state: present
-    filename: i3wm
-    update_cache: true
-    mode: 0644
-    validate_certs: true
-  become: true
+- name: Continue only when i3 is older
+  ansible.builtin.fail:
+    msg: "Version already exists"
+  when: current_i3_version.stdout != "" and current_i3_version.stdout is ansible.builtin.version(i3_version, operator='ge', strict=True)
+  register: version_changed
+  ignore_errors: true
 
-- name: Install i3wm and packages
+- name: Install apt packages
   ansible.builtin.apt:
     state: present
     name:
-      - i3
-      - polybar
+      - libxcb1-dev
+      - libxcb-keysyms1-dev
+      - libxcb-util0-dev
+      - libxcb-icccm4-dev
+      - libyajl-dev
+      - libstartup-notification0-dev
+      - libxcb-randr0-dev
+      - libev-dev
+      - libxcb-xinerama0-dev
+      - libpango1.0-dev
+      - libxcursor-dev
+      - libxcb-cursor-dev
+      - libxcb-xkb-dev
+      - libxkbcommon-dev
+      - libxkbcommon-x11-dev
+      - libxcb-shape0-dev
+      - libxcb-xrm-dev
+      - meson
+      - ninja-build
+  when: version_changed is succeeded
   become: true
 
+- name: "Git clone i3 v{{ i3_version }}"
+  ansible.builtin.git:
+    repo: https://github.com/i3/i3.git
+    dest: /opt/i3
+    version: "{{ i3_version }}"
+  when: version_changed is succeeded
+  become: true
+
+- name: Compile i3
+  ansible.builtin.shell: >
+    mason build && \
+    cd build && \
+    ninja && \
+    ninja install
+  args:
+    chdir: /opt/i3
+  changed_when: false
+  when: version_changed is succeeded
+  become: true
+
+- name: Copy .desktop files
+  ansible.builtin.shell: >
+    [ -d /usr/share/xsessions/ ] && cp *.desktop /usr/share/xsessions/
+  args:
+    chdir: /opt/i3/share/xsessions
+  changed_when: false
+  when: version_changed is succeeded
+  register: desktop_cp
+  failed_when: desktop_cp.rc >= 2
+  become: true

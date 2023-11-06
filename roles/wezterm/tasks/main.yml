@@ -1,0 +1,33 @@
+---
+- name: Check if wezterm is installed
+  ansible.builtin.command: command -v wezterm
+  ignore_errors: true
+  register: wezterm_installed
+
+- name: Git clone wezterm
+  ansible.builtin.repo:
+    dest: /tmp/wezterm
+    repo: https://github.com/wez/wezterm.git
+    version: master
+  when: not wezterm_installed.stat.exists
+
+- name: Build wezterm
+  ansible.builtin.command: cargo build --release
+  args:
+    chdir: /tmp/wezterm
+  changed_when: false
+  when: not wezterm_installed.stat.exists
+
+- name: Install wezterm
+  ansible.builtin.command: cargo install --path .
+  args:
+    chdir: /tmp/wezterm
+  changed_when: false
+  when: not wezterm_installed.stat.exists
+
+- name: Create wezterm config directory
+  ansible.builtin.file:
+    path: ~/.config/wezterm
+    state: directory
+    mode: '0755'
+  when: not wezterm_installed.stat.exists

@@ -1,0 +1,56 @@
+---
+- name: Check current neovim version
+  ansible.builtin.shell:
+    cmd: "fzf --version | cut -d ' ' -f1"
+  ignore_errors: true
+  register: current_fzf_version
+  changed_when: false
+
+- name: Compare version
+  ansible.builtin.fail:
+    msg: "Version already exists"
+  when: current_fzf_version.stdout != "" and current_fzf_version.stdout is ansible.builtin.version(fzf_version, operator='ge', strict=True)
+  register: version_changed
+  ignore_errors: true
+
+- name: Install/upgrade fzf
+  when: version_changed is succeeded
+  block:
+    - name: "Git clone fzf v{{ fzf_version }}"
+      ansible.builtin.git:
+        repo: "https://github.com/junegunn/fzf.git"
+        dest: "{{ ansible_env.HOME }}/.fzf"
+        version: "{{ fzf_version }}"
+        update: true
+        depth: 1
+
+    - name: Run install script using bash
+      ansible.builtin.command:
+        cmd: bash -c './install --all'
+        chdir: "{{ ansible_env.HOME }}/.fzf"
+      register: install_output
+      changed_when: install_output.rc != 0
+
+    - name: Check if zsh is available
+      ansible.builtin.command:
+        cmd: zsh --version
+      register: zsh_installed
+      changed_when: false
+      ignore_errors: true
+
+    - name: Run install script using zsh
+      ansible.builtin.command:
+        cmd: zsh -c './install --all'
+        chdir: "{{ ansible_env.HOME }}/.fzf"
+      register: install_output
+      changed_when: install_output.rc != 0
+      when: zsh_installed.rc == 0
+
+    - name: Add Fzf to .zshrc
+      ansible.builtin.lineinfile:
+        path: ~/.zshrc
+        line: "[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh"
+        regex: '^\[.*\].*\&\&.*source.*.fzf.zsh$'
+        state: present
+
+    # @@@ TODO: Add bash

@@ -1,0 +1,44 @@
+---
+- name: Install apt system packages
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - apt-transport-https
+      - ca-certificates
+      - bison
+      - gcc
+      - make
+      - cmake
+      - pkg-config
+      - unzip
+      - libtool
+      - libtool-bin
+      - gettext
+      - curl
+      - lsof
+      - ccache
+      - ninja-build
+      - python3-pip
+      - moreutils
+      - dnsutils
+      - flip
+      - htop
+      - jq
+      - openssh-server
+      - ranger
+      - trash-cli
+      - tree
+      - gnupg
+      - libevent-dev
+      - ncurses-dev
+      - libssl-dev
+      - xsel
+      - xclip
+      - trash-cli
+      - yadm
+      - sysstat
+      - neofetch
+      - tldr
+    state: present
+    install_recommends: false
+  become: true

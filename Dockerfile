@@ -4,7 +4,6 @@ ARG USER=${USER}
 
 WORKDIR /usr/local/bin
 ENV DEBIAN_FRONTEND=noninteractive
-RUN sed -i -e 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirror\.limda\.net\/Ubuntu\//' /etc/apt/sources.list
 RUN touch /etc/apt/apt.conf.d/99verify-peer.conf \
     && echo >>/etc/apt/apt.conf.d/99verify-peer.conf "Acquire { https::Verify-Peer false }"
 

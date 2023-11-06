@@ -1,0 +1,5 @@
+---
+- name: ncdu # ncdu is a disk utility
+  ansible.builtin.apt:
+    name: ncdu
+  become: true

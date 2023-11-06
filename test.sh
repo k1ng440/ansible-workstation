@@ -47,16 +47,14 @@ function start_container() {
         return
     fi
 
-    docker build --tag "compute-node-sim" \
-        --build-arg USER \
-        --file Dockerfile .
+    docker build --tag "compute-node-sim" --build-arg USER --file Dockerfile .
 
-    docker run -P -d --name "${NAME}" -v "$(pwd)":"/home/${USER}" "compute-node-sim"
+    docker run -P -d --name "${NAME}" -v "$(pwd)":"/home/${USER}/ansible-workstation" "compute-node-sim"
     echo "==> Container started"
 }
 
 function exec_command() {
-    docker exec ${NAME} ansible-playbook -v main.yml
+    docker exec ${NAME} ansible-playbook -v ~/ansible-workstation/main.yml
 }
 
 trap cleanup EXIT

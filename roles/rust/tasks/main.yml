@@ -1,0 +1,40 @@
+---
+- name: Check if cargo is installed
+  ansible.builtin.command: command -v cargo
+  register: cargo_exists
+  changed_when: false
+  ignore_errors: true
+
+- name: Creating temp directory
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: "rustup"
+  register: temp_dir
+
+- name: Download Installer
+  when: cargo_exists is failed
+  ansible.builtin.get_url:
+    url: https://sh.rustup.rs
+    dest: "{{ temp_dir.path }}/sh.rustup.rs"
+    mode: '0755'
+    force: 'yes'
+
+- name: Install rust/cargo
+  when: cargo_exists is failed
+  ansible.builtin.command: "{{ temp_dir.path }}/sh.rustup.rs -y"
+  register: rust_installed
+  changed_when: rust_installed.rc != 0
+
+- name: Add cargo to .zshrc
+  ansible.builtin.lineinfile:
+    path: ~/.zshrc
+    line: "[ -f ~/.cargo/env ] && source ~/.cargo/env"
+    regexp: '^\[.*source.*\.cargo\/env$'
+    state: present
+  when: cargo_exists is failed
+
+- name: Cleanup
+  ansible.builtin.file:
+    path: "{{ temp_dir.path }}"
+    state: "absent"
+  when: cargo_exists is failed

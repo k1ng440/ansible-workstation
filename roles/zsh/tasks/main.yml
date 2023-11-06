@@ -1,21 +1,24 @@
 ---
-- name: install zsh and plugins
+- name: Install zsh and plugins
   ansible.builtin.apt:
-    name:
-      - zsh
-      - zsh-autosuggestions
-      - zsh-syntax-highlighting
+    name: [zsh, zsh-autosuggestions, zsh-syntax-highlighting]
   become: true
 
 - name: Clone oh-my-zsh
-  ansible.builtin.command: 'git clone -c core.autocrlf=input --depth=1 https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh'
-  args:
-    chdir: '~'
-    creates: '~/.oh-my-zsh'
+  ansible.builtin.command:
+    cmd: "git clone -c core.autocrlf=input --depth=1 https://github.com/ohmyzsh/ohmyzsh.git {{ lookup('env', 'HOME') }}/.oh-my-zsh"
+    chdir: "{{ lookup('env', 'HOME') }}"
+    creates: "{{ lookup('env', 'HOME') }}/.oh-my-zsh"
 
 - name: Set permissions of oh-my-zsh
   ansible.builtin.file:
-    path: '~/.oh-my-zsh'
+    path: "{{ lookup('env', 'HOME') }}/.oh-my-zsh"
     mode: 'go-w'
     recurse: true
 
+- name: Set loginshell
+  ansible.builtin.command:
+    cmd: "chsh -s /usr/bin/zsh {{ lookup('env', 'USER') }}"
+  register: chsh_changed
+  changed_when: chsh_changed.rc == 0
+  become: true

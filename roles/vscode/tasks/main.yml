@@ -1,0 +1,45 @@
+---
+- name: Get stat of GPG key
+  ansible.builtin.stat:
+    path: /usr/share/keyrings/microsoft.gpg
+  register: gpg_file
+
+- name: Creating temp directory
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: "microsoft"
+  when: not gpg_file.stat.exists
+  register: temp_dir
+
+- name: Repository key
+  ansible.builtin.get_url:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    dest: "{{ temp_dir.path }}/microsoft.pub"
+    checksum: 'sha256:2cfd20a306b2fa5e25522d78f2ef50a1f429d35fd30bd983e2ebffc2b80944fa'
+    mode: "0644"
+  when: not gpg_file.stat.exists
+  become: true
+
+- name: De-Armor GPG key
+  ansible.builtin.command:
+    cmd: "gpg -o /usr/share/keyrings/microsoft.gpg --dearmor {{ temp_dir.path }}/microsoft.pub"
+    creates: /usr/share/keyrings/microsoft.gpg
+  when: not gpg_file.stat.exists
+  become: true
+
+- name: Add apt repository
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64, signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main
+    codename: "{{ dist_override | default(ansible_distribution_release) }}"
+    state: present
+    filename: vscode
+    update_cache: true
+    mode: "0644"
+    validate_certs: true
+  become: true
+
+- name: Install
+  ansible.builtin.apt:
+    name: code
+    state: present
+  become: true

@@ -1,11 +1,22 @@
+# vim:ft=yaml
+
 default_roles:
-    - system
-    - git
-    - zsh
-    - i3
-    - tmux
-    - neovim
-    - doppler
-    - bat
-    - gcp
-   # - drone-cli
+  - essential-packages
+  - git
+  - zsh
+  - i3
+  - tmux
+  - golang
+  - rust
+  - fzf
+  - slack
+  - ncdu
+  - hashicorp
+  - neovim
+  - doppler
+  - bat
+  - gcp
+  - fd
+  - chrome
+  - vscode
+

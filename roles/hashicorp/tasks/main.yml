@@ -1,0 +1,63 @@
+---
+- name: Get stat of GPG key
+  ansible.builtin.stat:
+    path: /usr/share/keyrings/hashicorp.gpg
+  register: gpg_file
+  ignore_errors: true
+
+- name: Creating temp directory
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: "hashicorp"
+  when: not gpg_file.stat.exists
+  register: temp_dir
+
+- name: Repository key
+  ansible.builtin.get_url:
+    url: https://apt.releases.hashicorp.com/gpg
+    dest: "{{ temp_dir.path }}/hashicorp.gpg"
+    checksum: 'sha256:cafb01beac341bf2a9ba89793e6dd2468110291adfbb6c62ed11a0cde6c09029'
+    mode: "0644"
+  when: not gpg_file.stat.exists
+  become: true
+
+- name: De-Armor GPG key
+  ansible.builtin.command:
+    cmd: "gpg -o /usr/share/keyrings/hashicorp.gpg --dearmor {{ temp_dir.path }}/hashicorp.gpg"
+    creates: /usr/share/keyrings/hashicorp.gpg
+  when: not gpg_file.stat.exists
+  become: true
+
+- name: Add apt repository
+  ansible.builtin.apt_repository:
+    repo: |
+      deb [arch=amd64 signed-by=/usr/share/keyrings/hashicorp.gpg]
+      https://apt.releases.hashicorp.com {{ dist_override | default(ansible_distribution_release) }} main
+    state: present
+    filename: hashicorp
+    update_cache: true
+    mode: "0644"
+    validate_certs: true
+  become: true
+
+- name: Install vagrant
+  ansible.builtin.apt:
+    name:
+      - vagrant
+      - vagrant-sshfs
+      - vagrant-hostmanager
+      - vagrant-mutate
+    state: present
+  become: true
+
+- name: Install VirtualBox
+  ansible.builtin.apt:
+    name: virtualbox
+    state: present
+  become: true
+
+- name: Install Terraform
+  ansible.builtin.apt:
+    name: terraform
+    state: present
+  become: true

@@ -5,12 +5,10 @@
   register: current_nvim_version
   changed_when: false
 
-- debug: msg="current_nvim_version={{ current_nvim_version.stdout }}"
-- debug: msg="nvim_version={{ nvim_version }}"
-
 - name: Compare version
-  fail: msg="Version already exists"
-  when: current_nvim_version.stdout != "" and current_nvim_version.stdout is version(nvim_version, operator='ge', strict=True)
+  ansible.builtin.fail:
+    msg: "Version already exists"
+  when: current_nvim_version.stdout != "" and current_nvim_version.stdout is ansible.builtin.version(nvim_version, operator='ge', strict=True)
   register: version_changed
   ignore_errors: true
 
@@ -29,7 +27,7 @@
         repo: "https://github.com/neovim/neovim.git"
         dest: "{{ temp_dir.path }}"
         version: "v{{ nvim_version }}"
-        update: no
+        update: false
         depth: 1
 
     - name: Make

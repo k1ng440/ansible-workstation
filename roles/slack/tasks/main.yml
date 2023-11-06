@@ -1,0 +1,22 @@
+---
+- name: Check if slack is installed
+  ansible.builtin.command:
+    cmd: dpkg-query -W slack-desktop
+  register: check_slack
+  failed_when: false
+  changed_when: false
+
+- name: Download slack package
+  ansible.builtin.get_url:
+    url: "https://downloads.slack-edge.com/releases/linux/{{ slack_version }}/prod/x64/slack-desktop-{{ slack_version }}-amd64.deb"
+    mode: "0644"
+    dest: "/tmp/slack-desktop-{{ slack_version }}-amd64.deb"
+  when: check_slack.rc == 1
+
+- name: Install package
+  ansible.builtin.command:
+    cmd: "apt install -y /tmp/slack-desktop-{{ slack_version }}-amd64.deb"
+  become: true
+  when: check_slack.rc == 1
+  register: install
+  changed_when: install.rc == 0
